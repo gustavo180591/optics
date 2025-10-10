@@ -3,11 +3,28 @@
 ## Fase 0: Configuración Inicial (Semana 1)
 
 ### Día 1-2: Entorno de Desarrollo
-- [ ] Configurar repositorio Git con estructura inicial
-- [ ] Configurar Docker y docker-compose
-- [ ] Configurar SvelteKit 2 con TypeScript
-- [ ] Configurar ESLint, Prettier y Husky
-- [ ] Configurar CI/CD básico con GitHub Actions
+- [x] Configurar repositorio Git con estructura inicial
+  - [x] Estructura de carpetas creada
+  - [x] Configuración básica de SvelteKit 2 con TypeScript
+  - [x] ESLint y Prettier configurados
+  - [x] Tailwind CSS instalado
+  - [x] Docker y docker-compose configurados
+- [x] Configurar Docker y docker-compose
+  - [x] Dockerfile configurado
+  - [x] docker-compose.yml configurado
+- [x] Configurar SvelteKit 2 con TypeScript
+  - [x] Configuración básica completada
+  - [x] Estructura de rutas inicial creada
+- [x] Configurar ESLint, Prettier y Husky
+  - [x] ESLint configurado con TypeScript y Svelte
+  - [x] Prettier configurado con reglas de formato
+  - [x] Husky configurado con pre-commit hooks
+- [x] Configurar CI/CD básico con GitHub Actions
+  - [x] Workflow de CI configurado con pruebas y construcción
+  - [x] Integración con Node.js 20
+  - [x] Linting y Type Checking automatizados
+  - [x] Construcción de la aplicación
+  - [ ] (Opcional) Configuración de despliegue en Vercel
 
 ### Día 3-4: Base de Datos y Autenticación
 - [ ] Instalar y configurar Prisma

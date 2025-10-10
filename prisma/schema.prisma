@@ -1,0 +1,284 @@
+// =============================================
+// Database Configuration
+// =============================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// =============================================
+// Enums
+// =============================================
+
+enum Rol {
+  CLIENTE
+  OPTICO
+  VENDEDOR
+  ADMINISTRATIVO
+  ADMIN
+}
+
+enum EstadoPedido {
+  BORRADOR
+  PENDIENTE_PAGO
+  PAGADO
+  EN_PROCESO
+  EN_PRODUCCION
+  LISTO_PARA_RETIRO
+  ENVIADO
+  ENTREGADO
+  CANCELADO
+  REEMBOLSADO
+}
+
+// =============================================
+// Models
+// =============================================
+
+model Usuario {
+  id                String      @id @default(uuid())
+  correo            String      @unique
+  dni               String      @unique
+  contrasena        String
+  nombre            String
+  apellido          String
+  telefono          String?
+  fechaNacimiento   DateTime?
+  rol               Rol         @default(CLIENTE)
+  correoVerificado  Boolean     @default(false)
+  fechaCreacion     DateTime    @default(now())
+  fechaActualizacion DateTime   @updatedAt
+
+  // Relaciones
+  direcciones       Direccion[]
+  recetas           Receta[]
+  ordenes           Orden[]
+  tokensRefresco    TokenRefresco[]
+  auditorias        Auditoria[]
+  
+  @@map("users")
+}
+
+model Direccion {
+  id                String   @id @default(uuid())
+  usuarioId         String
+  tipo              String
+  calle             String
+  numero            String
+  pisoDepto         String?
+  codigoPostal      String
+  ciudad            String
+  provincia         String
+  pais              String   @default("Argentina")
+  esPrincipal       Boolean  @default(false)
+  estaActivo        Boolean  @default(true)
+  fechaCreacion     DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  usuario     Usuario    @relation(fields: [usuarioId], references: [id])
+  envios      Envio[]
+  
+  @@map("direcciones")
+}
+
+model Receta {
+  id                String    @id @default(uuid())
+  usuarioId         String
+  urlArchivo        String?
+  odEsfera          String?
+  odCilindro        String?
+  odEje             Int?
+  odAdicion         String?
+  oiEsfera          String?
+  oiCilindro        String?
+  oiEje             Int?
+  oiAdicion         String?
+  distanciaPupilar  Int?
+  fechaEmision      DateTime
+  fechaVencimiento  DateTime
+  estaVerificada    Boolean   @default(false)
+  verificadoPor     String?
+  notas             String?
+  fechaCreacion     DateTime  @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
+  ordenes   Orden[]
+  
+  @@map("recetas")
+}
+
+model Lente {
+  id                String    @id @default(uuid())
+  nombre            String
+  descripcion       String?
+  material          String
+  indiceRefraccion  Float
+  color             String?
+  precioBase        Float
+  stock             Int       @default(0)
+  esFotocromatica   Boolean   @default(false)
+  esPolarizada      Boolean   @default(false)
+  estaActivo        Boolean   @default(true)
+  fechaCreacion     DateTime  @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  itemsOrden    ItemOrden[]
+  reglasPrecio  ReglaPrecio[]
+  
+  @@map("lentes")
+}
+
+model Orden {
+  id              String      @id @default(uuid())
+  numeroOrden     String      @unique
+  usuarioId       String
+  recetaId        String?
+  estado          EstadoPedido @default(BORRADOR)
+  subtotal        Float
+  impuesto        Float
+  descuento       Float       @default(0)
+  total           Float
+  notas           String?
+  fechaCreacion   DateTime    @default(now())
+  fechaActualizacion DateTime  @updatedAt
+
+  // Relaciones
+  usuario       Usuario    @relation(fields: [usuarioId], references: [id])
+  receta        Receta?    @relation(fields: [recetaId], references: [id])
+  items         ItemOrden[]
+  envio         Envio?
+  pago          Pago?
+  
+  @@map("ordenes")
+}
+
+model ItemOrden {
+  id            String  @id @default(uuid())
+  ordenId       String
+  lenteId       String?
+  cantidad      Int     @default(1)
+  precio        Float
+  notas         String?
+
+  // Relaciones
+  orden   Orden  @relation(fields: [ordenId], references: [id])
+  lente   Lente? @relation(fields: [lenteId], references: [id])
+  
+  @@map("items_orden")
+}
+
+model Envio {
+  id                  String    @id @default(uuid())
+  ordenId             String    @unique
+  direccionId         String
+  metodo              String
+  numeroSeguimiento   String?
+  estado              String
+  fechaEstimada       DateTime?
+  fechaEntrega        DateTime?
+  fechaCreacion       DateTime  @default(now())
+  fechaActualizacion  DateTime  @updatedAt
+
+  // Relaciones
+  orden     Orden     @relation(fields: [ordenId], references: [id])
+  direccion Direccion @relation(fields: [direccionId], references: [id])
+  
+  @@map("envios")
+}
+
+model Pago {
+  id                String    @id @default(uuid())
+  ordenId           String    @unique
+  monto             Float
+  metodo            String
+  estado            String
+  idTransaccion     String?
+  detalles          Json?
+  fechaPago         DateTime?
+  fechaReembolso    DateTime?
+  fechaCreacion     DateTime  @default(now())
+  fechaActualizacion DateTime  @updatedAt
+
+  // Relaciones
+  orden Orden @relation(fields: [ordenId], references: [id])
+  
+  @@map("pagos")
+}
+
+model ObraSocial {
+  id               String   @id @default(uuid())
+  nombre           String
+  descripcion      String?
+  estaActiva       Boolean  @default(true)
+  requiereAuth     Boolean  @default(false)
+  urlAutorizacion  String?
+  fechaCreacion    DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  reglasPrecio ReglaPrecio[]
+  
+  @@map("obras_sociales")
+}
+
+model ReglaPrecio {
+  id                String    @id @default(uuid())
+  obraSocialId      String
+  lenteId           String?
+  tipoDescuento     String
+  valorDescuento    Float
+  compraMinima      Float?
+  fechaInicio       DateTime
+  fechaFin          DateTime?
+  estaActiva        Boolean   @default(true)
+  fechaCreacion     DateTime  @default(now())
+  fechaActualizacion DateTime  @updatedAt
+
+  // Relaciones
+  obraSocial  ObraSocial @relation(fields: [obraSocialId], references: [id])
+  lente       Lente?     @relation(fields: [lenteId], references: [id])
+  
+  @@map("reglas_precio")
+}
+
+model Auditoria {
+  id            String   @id @default(uuid())
+  usuarioId     String?
+  accion        String
+  tipoEntidad   String
+  entidadId     String
+  datosAnteriores Json?
+  datosNuevos   Json?
+  direccionIP   String?
+  agenteUsuario String?
+  fechaCreacion DateTime @default(now())
+
+  // Relaciones
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+  
+  @@map("auditorias")
+}
+
+model TokenRefresco {
+  id            String   @id @default(uuid())
+  usuarioId     String
+  token         String   @unique
+  fechaExpiracion DateTime
+  fechaCreacion  DateTime @default(now())
+
+  // Relaciones
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  @@map("tokens_refresco")
+}
